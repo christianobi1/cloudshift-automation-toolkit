@@ -1,0 +1,14 @@
+name: CloudShift CI/CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+
+        uses: actions/checkout@v4
