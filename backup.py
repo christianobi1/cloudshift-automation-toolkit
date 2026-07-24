@@ -15,4 +15,4 @@ shutil.make_archive(
     "/var/www"
 )
 
-print(f"Backup done: site-{TODAY}.tar.gz")
+print(f"Backup Successfull: site-{TODAY}.tar.gz")

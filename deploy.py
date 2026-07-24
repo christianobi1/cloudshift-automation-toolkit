@@ -20,4 +20,4 @@ check = subprocess.run(
 if check.returncode == 0:
     print("Deploy OK", datetime.now().strftime("%Y-%m-%d_%H:%M:%S"))
 else:
-    print("Deployment FAILED!")
+    print("Deployment Not Successful!")
