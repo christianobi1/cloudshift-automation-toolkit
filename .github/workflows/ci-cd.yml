@@ -1,14 +1,10 @@
-name: CloudShift CI/CD
+- name: Set up Python
+  uses: actions/setup-python@v5
+  with:
+    python-version: '3.10'
 
-on:
-  push:
-    branches: [main]
+- name: Install pytest
+  run: pip install pytest
 
-jobs:
-  build-test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-
-        uses: actions/checkout@v4
+- name: Run tests
+  run: pytest test_backup.py
