@@ -23,3 +23,22 @@ jobs:
 
       - name: Run tests
         run: pytest test_backup.py
+
+  deploy:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/automation
+            git pull
+            python3 run_all.py
