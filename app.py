@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 
-import time
+from flask import Flask, jsonify
 
-while True:
-    print("CloudShift Payment API is running...")
-    time.sleep(10)
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return jsonify({
+        "status": "ok",
+        "service": "cloudshift-app"
+    })
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
