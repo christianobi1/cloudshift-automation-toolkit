@@ -1,10 +1,48 @@
-FROM python:3.11-slim
+# Dockerfile — production upgrade of the version already in cloud-automation-toolkit.
+#
+# What changed vs. the original teaching version, and why:
+#   - multi-stage build: final image doesn't carry pip's build cache or compilers
+#   - pinned base image: reproducible builds
+#   - non-root user: container doesn't run as root
+#   - gunicorn, not Flask's development server
+#   - HEALTHCHECK: lets Docker show container health
+
+# ---- Stage 1: build dependencies --------------------------------------------
+
+FROM python:3.11-slim-bookworm AS builder
+
+WORKDIR /build
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# ---- Stage 2: runtime image --------------------------------------------------
+
+FROM python:3.11-slim-bookworm
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends iputils-ping curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd --create-home --uid 1000 --shell /usr/sbin/nologin appuser
 
 WORKDIR /app
 
-COPY requirements.txt .
-COPY app.py .
+# Bring in only the installed packages from the build stage
+COPY --from=builder /root/.local /home/appuser/.local
 
-RUN pip install -r requirements.txt
+COPY --chown=appuser:appuser . .
 
-CMD ["python3", "app.py"]
+ENV PATH=/home/appuser/.local/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+USER appuser
+
+EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/healthz || exit 1
+
+# 2 workers is enough for a small internal tool
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--access-logfile", "-", "app:app"]

@@ -1,0 +1,17 @@
+.git
+.github
+.cache
+.ssh
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+monitor.log
+.bash_history
+.bash_logout
+.bashrc
+.profile
+LAB_GUIDE.md
+PRODUCTION_NOTES.md
+k8s/
+.env

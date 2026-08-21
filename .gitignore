@@ -1,1 +1,10 @@
 cloudshift-app.tar
+
+tls.key
+tls.crt
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
