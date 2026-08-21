@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -10,6 +11,7 @@ pipeline {
 
         stage('Build & Test') {
             steps {
+                sh 'python3 -m pip install -r requirements.txt'
                 sh 'python3 -m pytest test_app.py'
             }
         }
