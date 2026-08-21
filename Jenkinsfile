@@ -1,3 +1,4 @@
+```groovy
 pipeline {
     agent any
 
@@ -10,7 +11,6 @@ pipeline {
 
         stage('Build & Test') {
             steps {
-                sh 'python3 -m pip install --user pytest'
                 sh 'python3 -m pytest test_app.py'
             }
         }
@@ -26,7 +26,7 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-credentials',
+                        credentialsId: 'dockerhub-creds',
                         usernameVariable: 'DOCKER_USERNAME',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
@@ -63,3 +63,4 @@ pipeline {
         }
     }
 }
+```
