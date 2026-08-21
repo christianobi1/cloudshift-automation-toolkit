@@ -3,33 +3,26 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = 'christianobij/cloudshift-app'
-        K8S_NAMESPACE = 'cloudshift'
-        K8S_DEPLOYMENT = 'cloudshift-web'
+        DOCKER_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
 
         stage('Build & Test') {
             steps {
-                sh '''
-                    python3 -m pip install --user pytest
-                    python3 -m pytest test_backup.py
-                '''
+                sh 'python3 -m pip install --user pytest'
+                sh 'python3 -m pytest test_app.py'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker build \
-                      -t ${DOCKER_IMAGE}:${BUILD_NUMBER} \
-                      -t ${DOCKER_IMAGE}:latest \
-                      .
-                '''
+                sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
+                sh 'docker tag $DOCKER_IMAGE:$DOCKER_TAG $DOCKER_IMAGE:latest'
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push to Docker Hub') {
             steps {
                 withCredentials([
                     usernamePassword(
@@ -39,13 +32,9 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        echo "$DOCKER_PASSWORD" | docker login \
-                          -u "$DOCKER_USERNAME" \
-                          --password-stdin
-
-                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                        docker push ${DOCKER_IMAGE}:latest
-
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker push $DOCKER_IMAGE:$DOCKER_TAG
+                        docker push $DOCKER_IMAGE:latest
                         docker logout
                     '''
                 }
@@ -55,13 +44,10 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                    kubectl -n ${K8S_NAMESPACE} set image \
-                      deployment/${K8S_DEPLOYMENT} \
-                      web=${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    kubectl -n cloudshift set image deployment/cloudshift-web \
+                    web=$DOCKER_IMAGE:$DOCKER_TAG
 
-                    kubectl -n ${K8S_NAMESPACE} rollout status \
-                      deployment/${K8S_DEPLOYMENT} \
-                      --timeout=180s
+                    kubectl -n cloudshift rollout status deployment/cloudshift-web --timeout=120s
                 '''
             }
         }
@@ -69,26 +55,11 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 sh '''
-                    echo "=== Deployment ==="
-                    kubectl get deployment ${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE}
-
-                    echo "=== Pods ==="
-                    kubectl get pods -n ${K8S_NAMESPACE}
-
-                    echo "=== Service ==="
-                    kubectl get svc ${K8S_DEPLOYMENT} -n ${K8S_NAMESPACE}
+                    kubectl get pods -n cloudshift
+                    kubectl get deployment -n cloudshift
+                    kubectl get service -n cloudshift
                 '''
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'CloudShift CI/CD pipeline completed successfully!'
-        }
-
-        failure {
-            echo 'CloudShift CI/CD pipeline failed.'
         }
     }
 }
