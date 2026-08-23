@@ -1,1 +1,7 @@
 cloudshift-app.tar
+
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+venv/

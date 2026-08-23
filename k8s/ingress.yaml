@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cloudshift-web
+  namespace: cloudshift
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+
+spec:
+  ingressClassName: nginx
+
+  tls:
+    - hosts:
+        - cloudshift.local
+      secretName: cloudshift-tls
+
+  rules:
+    - host: cloudshift.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cloudshift-web
+                port:
+                  number: 80
