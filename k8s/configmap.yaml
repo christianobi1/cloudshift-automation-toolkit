@@ -7,3 +7,4 @@ data:
   APP_VERSION: "v1"
   FLASK_ENV: "production"
   REDIS_HOST: "cache"
+  DEMO_MODE: "true"

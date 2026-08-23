@@ -5,14 +5,15 @@ metadata:
   namespace: cloudshift
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    # Real cluster:
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
 spec:
   ingressClassName: nginx
+
   tls:
     - hosts:
         - cloudshift.local
       secretName: cloudshift-tls
+
   rules:
     - host: cloudshift.local
       http:

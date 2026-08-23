@@ -1,42 +1,39 @@
 """
-test_app.py — actual tests for app.py, run by the Jenkins pipeline's
-Build & Test stage before any image is built or deployed.
+test_app.py — actual tests for app.py.
 
-(test_backup.py's current assertion — `os.path.exists(...) or True` —
-always passes regardless of the real condition. These tests are written
-to actually fail if the behavior they check breaks.)
+These tests are run by the Jenkins pipeline's Build & Test stage
+before any image is built or deployed.
 """
 
 import app as app_module
+
 
 client = app_module.app.test_client()
 
 
 def _set(monkeypatch, **attrs):
-    """Patch the already-imported app module's globals directly, rather
-    than re-importing app.py per test — re-importing would re-run its
-    module-level setup (logging config, etc.) on every test for no
-    benefit."""
+    """Patch the already-imported app module's globals directly."""
     for name, value in attrs.items():
         monkeypatch.setattr(app_module, name, value)
 
 
 def test_healthz_returns_ok(monkeypatch):
     resp = client.get("/healthz")
+
     assert resp.status_code == 200
     assert resp.get_json()["status"] == "ok"
 
 
 def test_readyz_returns_ready(monkeypatch):
     resp = client.get("/readyz")
+
     assert resp.status_code == 200
     assert resp.get_json()["status"] == "ready"
 
 
 def test_api_status_matches_original_contract(monkeypatch):
-    """Locks in the exact response shape of the original app.py's `/`
-    route, now served at /api/status, so nothing downstream that
-    depends on it silently breaks."""
+    """Make sure the original /api/status response still works."""
+
     resp = client.get("/api/status")
 
     assert resp.status_code == 200
@@ -47,9 +44,10 @@ def test_api_status_matches_original_contract(monkeypatch):
 
 
 def test_crash_disabled_by_default(monkeypatch):
-    """The most important test in this file: /crash must 403 unless
-    DEMO_MODE is explicitly set to 'true'. If this test ever fails,
-    do not ship the change that broke it."""
+    """
+    /crash must return 403 unless DEMO_MODE is explicitly enabled.
+    """
+
     _set(monkeypatch, DEMO_MODE=False)
 
     resp = client.get("/crash")

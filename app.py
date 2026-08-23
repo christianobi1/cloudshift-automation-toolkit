@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 CloudShift Status Dashboard — production build
 -----------------------------------------------
@@ -19,6 +17,32 @@ The original was:
 
 That JSON response still exists below at /api/status, unchanged, so
 anything that already depends on it keeps working.
+
+What's new in this build, and why:
+
+  - Structured logging to stdout (not print()) — this is what a real
+    log aggregator (CloudWatch, Loki, whatever) actually ingests.
+
+  - /healthz (liveness) and /readyz (readiness) are now separate, which
+    is what a real Kubernetes Deployment should point at: liveness asks
+    "should this pod be restarted?", readiness asks "should this pod
+    receive traffic right now?" — they are different questions.
+
+  - /crash is now OFF by default. It only works when DEMO_MODE=true
+    is set in the ConfigMap (see k8s/configmap.yaml). A real production
+    deployment leaves DEMO_MODE unset, and this endpoint 403s. This
+    mirrors a real practice: dangerous debug endpoints are opt-in,
+    not opt-out.
+
+  - Running under gunicorn (see Dockerfile) instead of Flask's dev
+    server changes how /crash needs to behave — see the comment on the
+    /crash route below for why.
+
+  - No /metrics or Prometheus dependency. That's a deliberate omission,
+    not an oversight: this class hasn't covered Prometheus/observability
+    yet, so nothing here should assume it. It's a natural next module
+    to add once that's taught, on top of the /healthz and /readyz
+    already in place.
 """
 
 import logging
@@ -31,7 +55,9 @@ from datetime import datetime, timezone
 
 from flask import Flask, jsonify, render_template, request
 
+
 # --- Structured-ish logging --------------------------------------------
+
 # A real deployment would use JSON logging + a log shipper. This keeps it
 # simple but still goes to stdout, which is what `kubectl logs` reads and
 # what any log aggregator tails in production.
@@ -40,15 +66,19 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s level=%(levelname)s msg=%(message)s",
 )
+
 log = logging.getLogger("cloudshift")
 
 app = Flask(__name__)
+
 
 # When this process started. Used to show "pod uptime" — the number that
 # resets to zero every time Kubernetes restarts a crashed pod.
 PROCESS_START = time.time()
 
+
 # --- Config values ----------------------------------------------------
+
 # In Lab Guide 4 these move from hardcoded strings into a ConfigMap.
 # We read them from the environment with safe defaults so the app also
 # runs fine locally with plain `docker run`, before any K8s concepts
@@ -57,23 +87,29 @@ APP_VERSION = os.environ.get("APP_VERSION", "v1-local")
 FLASK_ENV = os.environ.get("FLASK_ENV", "development")
 REDIS_HOST = os.environ.get("REDIS_HOST", "not-configured")
 
+
 # Off by default. Only the classroom ConfigMap sets this to "true".
 # A real production ConfigMap should never set this.
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
-# --- Pod identity -------------------------------------------------------
+
+# --- Pod identity -----------------------------------------------------
+
 # POD_NAME and POD_IP are populated by the Kubernetes Downward API
 # (see k8s/deployment.yaml, env: section referencing fieldRef).
 # Locally / under plain Docker they fall back to the container hostname.
 POD_NAME = os.environ.get("POD_NAME", socket.gethostname())
 POD_IP = os.environ.get("POD_IP", "unknown")
 
-# Detects whether we're running under gunicorn (see Dockerfile CMD) or
+
+# Detects whether we're running under gunicorn (see Dockerfile) or
 # directly via `python3 app.py` (local testing, no supervisor process).
 # /crash needs to behave differently in each case — see that route below.
 RUNNING_UNDER_GUNICORN = "gunicorn" in sys.argv[0]
 
-# --- Request logging -----------------------------------------------------
+
+# --- Request logging --------------------------------------------------
+
 @app.after_request
 def _log_request(response):
     log.info(
@@ -88,6 +124,8 @@ def _log_request(response):
 def pod_uptime_seconds() -> int:
     return int(time.time() - PROCESS_START)
 
+
+# --- Routes -----------------------------------------------------------
 
 @app.route("/")
 def index():
@@ -106,7 +144,8 @@ def index():
 @app.route("/api/status")
 def api_status():
     """Unchanged from the original app.py — kept for backward compatibility
-    with anything that already calls this route."""
+    with anything that already calls this route.
+    """
     return jsonify(status="ok", service="cloudshift-app")
 
 
@@ -115,7 +154,8 @@ def healthz():
     """Liveness probe. Answers one question: is this process still alive
     and able to respond at all? If this stops responding, Kubernetes
     kills and replaces the pod — it does NOT ask whether the app is
-    ready for traffic, only whether it should keep existing."""
+    ready for traffic, only whether it should keep existing.
+    """
     return jsonify(
         status="ok",
         pod=POD_NAME,
@@ -129,14 +169,16 @@ def readyz():
     receive traffic right now? In a real app this would check its
     actual dependencies (database, cache, etc.) and return 503 if any
     of them are unreachable, so the Service stops routing to it until
-    it recovers — without Kubernetes killing the pod over it."""
+    it recovers — without Kubernetes killing the pod over it.
+    """
     return jsonify(status="ready", pod=POD_NAME)
 
 
 @app.route("/config")
 def config():
     """Shows exactly what Lab Guide 4 is teaching: which values came from
-    the ConfigMap vs. which are hardcoded fallback defaults."""
+    the ConfigMap vs. which are hardcoded fallback defaults.
+    """
     return jsonify(
         app_version=APP_VERSION,
         flask_env=FLASK_ENV,
@@ -166,9 +208,12 @@ def crash():
     `python3 app.py` there's no supervisor, so a plain exit is enough.
     """
     if not DEMO_MODE:
-        return jsonify(
-            error="disabled: set DEMO_MODE=true to enable this demo endpoint"
-        ), 403
+        return (
+            jsonify(
+                error="disabled: set DEMO_MODE=true to enable this demo endpoint"
+            ),
+            403,
+        )
 
     log.warning(
         "crash endpoint triggered on pod=%s — killing container",
@@ -180,7 +225,7 @@ def crash():
     else:
         os._exit(1)
 
-    return jsonify(status="crashing"), 200  # likely never sent — the process is already dying
+    return jsonify(status="crashing"), 200
 
 
 if __name__ == "__main__":

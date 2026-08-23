@@ -1,5 +1,4 @@
-/* CloudShift Inc. — internal status dashboard
-   Palette: charcoal + orange */
+/* CloudShift Inc. — internal status dashboard */
 
 :root {
   --bg: #14171a;
@@ -42,11 +41,14 @@ body {
       transparent 55%
     ),
     var(--bg);
+
   color: var(--text);
   font-family: var(--body);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
+
+/* ---------- Layout ---------- */
 
 .wrap {
   max-width: 980px;
@@ -234,23 +236,52 @@ h1 {
   color: var(--muted);
 }
 
-.value {
+.val {
   color: var(--text);
   font-weight: 500;
   text-align: right;
   word-break: break-word;
 }
 
-/* ---------- Dashboard cards ---------- */
+.val-accent {
+  color: var(--orange);
+  font-weight: 600;
+}
 
-.cards {
+.row-cursor {
+  border-bottom: none;
+  padding-top: 14px;
+}
+
+.prompt {
+  color: var(--green);
+}
+
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: var(--text);
+  margin-left: 6px;
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Concept cards ---------- */
+
+.concepts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
   padding: 44px 0 20px;
 }
 
-.card {
+.concept-card {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -259,7 +290,7 @@ h1 {
   flex-direction: column;
 }
 
-.card-label {
+.tag {
   display: inline-block;
   width: fit-content;
   font-family: var(--mono);
@@ -269,35 +300,38 @@ h1 {
   padding: 4px 10px;
   border-radius: 999px;
   margin-bottom: 14px;
+}
+
+.tag-orange {
   background: var(--orange-soft);
   color: var(--orange);
 }
 
-.card:nth-child(2) .card-label {
+.tag-blue {
   background: var(--blue-soft);
   color: var(--blue);
 }
 
-.card:nth-child(3) .card-label {
+.tag-green {
   background: var(--green-soft);
   color: var(--green);
 }
 
-.card h2 {
+.concept-card h3 {
   font-family: var(--display);
   font-size: 18px;
   margin: 0 0 10px;
   letter-spacing: -0.01em;
 }
 
-.card p {
+.concept-card p {
   color: var(--muted);
   font-size: 14px;
   margin: 0 0 18px;
   flex-grow: 1;
 }
 
-.card code {
+.concept-card code {
   font-family: var(--mono);
   font-size: 12.5px;
   background: rgba(255, 255, 255, 0.06);
@@ -306,7 +340,8 @@ h1 {
   color: var(--text);
 }
 
-.card-link {
+.crash-btn,
+.ghost-btn {
   display: inline-flex;
   align-items: center;
   width: fit-content;
@@ -316,19 +351,30 @@ h1 {
   text-decoration: none;
   padding: 9px 14px;
   border-radius: 9px;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.crash-btn {
+  background: var(--orange);
+  color: #1a1105;
+}
+
+.crash-btn:hover {
+  transform: translateY(-1px);
+  background: #f08442;
+}
+
+.ghost-btn {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
-  transition:
-    transform 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease;
 }
 
-.card-link:hover {
+.ghost-btn:hover {
   transform: translateY(-1px);
   border-color: var(--muted);
-  background: rgba(255, 255, 255, 0.03);
 }
 
 /* ---------- Footer ---------- */
@@ -348,7 +394,7 @@ h1 {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 760px) {
-  .cards {
+  .concepts {
     grid-template-columns: 1fr;
   }
 
@@ -360,7 +406,8 @@ h1 {
 /* ---------- Reduced motion ---------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .dot-live {
+  .dot-live,
+  .cursor {
     animation: none;
   }
 }

@@ -6,47 +6,58 @@ metadata:
   labels:
     app: cloudshift-web
     app.kubernetes.io/part-of: cloudshift
+
 spec:
   replicas: 3
   revisionHistoryLimit: 5
+
   strategy:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
       maxSurge: 1
+
   selector:
     matchLabels:
       app: cloudshift-web
+
   template:
     metadata:
       labels:
         app: cloudshift-web
+
     spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+
       containers:
         - name: web
-          image: christianobij/cloudshift-app:v1
-          imagePullPolicy: IfNotPresent
+          image: christianobij/cloudshift-app:latest
+          imagePullPolicy: Always
+
           ports:
             - name: http
               containerPort: 5000
+
           envFrom:
             - configMapRef:
                 name: cloudshift-config
             - secretRef:
                 name: cloudshift-secrets
+
           env:
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+
             - name: POD_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+
           resources:
             requests:
               cpu: "100m"
@@ -54,12 +65,14 @@ spec:
             limits:
               cpu: "250m"
               memory: "256Mi"
+
           startupProbe:
             httpGet:
               path: /healthz
               port: http
             failureThreshold: 6
             periodSeconds: 5
+
           livenessProbe:
             httpGet:
               path: /healthz
@@ -67,6 +80,7 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 3
+
           readinessProbe:
             httpGet:
               path: /readyz
@@ -74,15 +88,18 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 2
+
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
+
           volumeMounts:
             - name: tmp
               mountPath: /tmp
+
       volumes:
         - name: tmp
           emptyDir: {}

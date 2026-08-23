@@ -1,53 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <title>CloudShift Status — {{ pod_name }}</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudShift Inc. — Status Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
   <header class="topbar">
-    <div class="wrap topbar-inner">
+    <div class="topbar-inner wrap">
       <div class="brand">
         <span class="brand-mark">CS</span>
-        <span class="brand-name">CloudShift<span class="brand-inc">Inc.</span></span>
+        <span class="brand-name">
+          CloudShift<span class="brand-inc">Inc.</span>
+        </span>
       </div>
 
-      <div class="brand-tag">
-        Internal Status Dashboard &middot; DevOps Class Demo
-      </div>
+      <span class="brand-tag">
+        Internal Status Dashboard · DevOps Class Demo
+      </span>
     </div>
   </header>
 
   <main class="wrap">
 
     <section class="hero">
-      <p class="eyebrow">
-        This page is served by one running pod &mdash; refresh it a few times
-      </p>
+      <p class="eyebrow">CloudShift Web Service</p>
 
-      <h1>Who's answering right now?</h1>
+      <h1>Who’s answering right now?</h1>
 
       <p class="lede">
-        Every field below is read live from <em>this exact process</em>.
-        Behind a Kubernetes Service, hit refresh a handful of times and watch
-        <span class="hl">POD NAME</span> change &mdash; that's the Service
+        This page is served by one running pod — refresh it a few times.
+        Behind a Kubernetes Service, hit refresh a handful of times and
+        watch <span class="hl">POD NAME</span> change — that's the Service
         load-balancing you across replicas.
       </p>
 
       <div class="terminal">
+
         <div class="terminal-bar">
           <span class="dot dot-live"></span>
           <span class="terminal-label">
-            cloudshift-web &mdash; live readout
+            cloudshift-web — live readout
           </span>
           <span class="terminal-time">{{ now }}</span>
         </div>
@@ -56,112 +52,122 @@
 
           <div class="row">
             <span class="key">pod_name</span>
-            <span class="value">{{ pod_name }}</span>
+            <span class="val val-accent">{{ pod_name }}</span>
           </div>
 
           <div class="row">
             <span class="key">pod_ip</span>
-            <span class="value">{{ pod_ip }}</span>
+            <span class="val">{{ pod_ip }}</span>
           </div>
 
           <div class="row">
             <span class="key">pod_uptime</span>
-            <span class="value" id="uptime" data-start="{{ uptime }}">
-              {{ uptime }}s
-            </span>
+            <span
+              class="val"
+              id="uptime"
+              data-start="{{ uptime }}"
+            >{{ uptime }}s</span>
           </div>
 
           <div class="row">
             <span class="key">app_version</span>
-            <span class="value">{{ version }}</span>
+            <span class="val">{{ version }}</span>
           </div>
 
           <div class="row">
             <span class="key">flask_env</span>
-            <span class="value">{{ env }}</span>
+            <span class="val">{{ env }}</span>
           </div>
 
           <div class="row">
             <span class="key">redis_host</span>
-            <span class="value">{{ redis_host }}</span>
+            <span class="val">{{ redis_host }}</span>
+          </div>
+
+          <div class="row row-cursor">
+            <span class="prompt">$</span>
+            <span class="cursor"></span>
           </div>
 
         </div>
       </div>
     </section>
 
-    <section class="cards">
 
-      <article class="card">
-        <div class="card-label">Self-healing</div>
+    <section class="concepts">
 
-        <h2>Kill this pod on purpose</h2>
+      <article class="concept-card">
+        <span class="tag tag-orange">Self-healing</span>
+
+        <h3>Kill this pod on purpose</h3>
 
         <p>
-          <code>/crash</code> ends this process instantly. Run this with plain
-          <code>docker run</code> and the app stays dead. Run it under the
-          Deployment in <code>k8s/deployment.yaml</code> and Kubernetes
-          restarts it within seconds &mdash; refresh after ~10s and
-          <code>pod_uptime</code> will read close to zero again.
+          <code>/crash</code> ends this process instantly. Run this with
+          plain Docker and the app stays dead. Run it under the Deployment
+          in <code>k8s/deployment.yaml</code> and Kubernetes restarts it
+          within seconds.
         </p>
 
-        <a href="/crash" class="card-link">
-          Crash this pod &rarr;
+        <a class="crash-btn" href="/crash">
+          Crash this pod →
         </a>
       </article>
 
-      <article class="card">
-        <div class="card-label">Scaling</div>
 
-        <h2>One pod becomes several</h2>
+      <article class="concept-card">
+        <span class="tag tag-blue">Scaling</span>
+
+        <h3>One pod becomes several</h3>
 
         <p>
           <code>kubectl scale deployment/cloudshift-web --replicas=5</code>
-          turns this single process into five identical ones. The Service in
-          front of them doesn't change &mdash; it just has more pods to hand
+          turns this single process into five identical ones. The Service
+          in front of them doesn't change — it just has more pods to hand
           traffic to.
         </p>
 
-        <a href="/healthz" class="card-link">
-          View /healthz &rarr;
+        <a class="ghost-btn" href="/healthz">
+          View /healthz →
         </a>
       </article>
 
-      <article class="card">
-        <div class="card-label">Config</div>
 
-        <h2>Nothing here is hardcoded</h2>
+      <article class="concept-card">
+        <span class="tag tag-green">Config</span>
+
+        <h3>Nothing here is hardcoded</h3>
 
         <p>
-          <code>redis_host</code> and <code>flask_env</code> above come from a
-          <strong>ConfigMap</strong>, not from this file. Change the ConfigMap,
-          restart the rollout, and every pod picks up the new values &mdash;
-          no rebuild required.
+          <code>redis_host</code> and <code>flask_env</code> above come from
+          a <strong>ConfigMap</strong>, not from this file. Change the
+          ConfigMap, restart the rollout, and every pod picks up the new
+          values — no rebuild required.
         </p>
 
-        <a href="/config" class="card-link">
-          View /config &rarr;
+        <a class="ghost-btn" href="/config">
+          View /config →
         </a>
       </article>
 
     </section>
 
+
     <section class="footnote">
       <p>
-        Built for the CloudShift Inc. DevOps class &middot;
-        Facilitator: Ebika Kpou &middot;
-        continuation of the Docker &amp; Compose project onto Kubernetes.
+        Built for the CloudShift Inc. DevOps class · Facilitator:
+        Ebika Kpou · continuation of the Docker &amp; Compose project
+        onto Kubernetes.
       </p>
     </section>
 
   </main>
 
+
   <script>
-    // Ticks the on-page uptime counter once per second, purely cosmetic —
-    // the server-rendered value is the one that actually resets after a crash.
+    // Ticks the on-page uptime counter once per second.
+    // The server-rendered value is the one that actually resets after a crash.
 
     const el = document.getElementById('uptime');
-
     let seconds = parseInt(el.dataset.start, 10) || 0;
 
     setInterval(() => {
